@@ -1,10 +1,10 @@
 # Futurice Eventshuffle API
 
-    An EventShuffle implementation in a scalable Flask API, served in a docker container, for Futurice.
-    As this is a backend task, there is no direct front-end interface included.
-    
-    The interface/API endpoints were tested and developed by interacting via `curl` and Postman (https://www.postman.com/downloads/).
-    Requests are expected to be `Content-Type: application/json` with appropriate functions to ensure this is the case.
+An EventShuffle implementation in a scalable Flask API, served in a docker container, for Futurice.
+As this is a backend task, there is no direct front-end interface included.
+
+The interface/API endpoints were tested and developed by interacting via `curl` and Postman (https://www.postman.com/downloads/).
+Requests are expected to be `Content-Type: application/json` with appropriate functions to ensure this is the case.
 
 ## Prerequisites
 
@@ -20,22 +20,22 @@
 
 ### Running the development application
 
-    Assuming you have docker installed on your local system, then the following instructions are sufficient to deploy
-    this application. Once you clone the repository, all that is required is to ensure you are in the ./shuffleboard directory, and run the command:
+Assuming you have docker installed on your local system, then the following instructions are sufficient to deploy
+this application. Once you clone the repository, all that is required is to ensure you are in the ./shuffleboard directory, and run the command:
 
-    ```
-    docker-compose build
-    ```
+```
+docker-compose build
+```
 
-    This will compose a docker container, which includes a PSQL server for the Flask application to interact with.
-    Before attempting to interact with any (GET, at least) API endpoints, you will need to populate the database with some data.
+This will compose a docker container, which includes a PSQL server for the Flask application to interact with.
+Before attempting to interact with any (GET, at least) API endpoints, you will need to populate the database with some data.
 
-    You can do this via the following commands (again, from the shuffleboard root directory): 
+You can do this via the following commands (again, from the shuffleboard root directory): 
 
-    ```
-    docker-compose exec api python manage.py create_db
-    docker-compose exec api python manage.py seed_db
-    ```
+```
+docker-compose exec api python manage.py create_db
+docker-compose exec api python manage.py seed_db
+```
 
 ## Application tree and description
 
