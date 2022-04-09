@@ -65,5 +65,5 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 
-# run entrypoint.prod.sh
+# run entrypoint for prod
 ENTRYPOINT ["/home/app/api/psql_init_prod.sh"]

@@ -16,6 +16,15 @@ services:
     image: postgres:13-alpine
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data/
+    #
+    # PSQL environment variables stored in a file
+    # as this is production / storing creds in plaintext is bad
+    # however, since you want to see how I work
+    # the file is left as a plaintext.
+    # As per the development docker-compose, a real production
+    # would have that file stored in the container's
+    # /run/secrets/blah file
+    #
     env_file:
       - ./.env.prod.db
 

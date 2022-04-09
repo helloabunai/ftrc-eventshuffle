@@ -16,6 +16,17 @@ services:
     image: postgres:13-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    #
+    # environment variables for the PSQL server
+    # naturally these should never be stored in plaintext
+    # but given the scope of the assignment, i figured it is ok
+    # In production, these would go into a docker secret
+    # e.g.
+    # environment:
+    #  - POSTGRES_USER=postgres
+    #  - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd
+    #  - POSTGRES_DB=futurice_shuffledb
+    #
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=securepassword

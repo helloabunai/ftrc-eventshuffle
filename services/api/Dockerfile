@@ -19,5 +19,5 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . /usr/src/app/
 
-# run entrypoint.sh
+# container launches software from here
 ENTRYPOINT ["/usr/src/app/psql_init.sh"]
