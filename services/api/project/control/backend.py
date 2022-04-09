@@ -28,9 +28,9 @@ def seed_db():
     db.session.bulk_save_objects(dates_to_add)
 
     events_to_add = [
-        Event(event_name = "Jake's secret party"),
-        Event(event_name = "Bowling night"),
-        Event(event_name = "Tabletop gaming")
+        Event(name = "Jake's secret party"),
+        Event(name = "Bowling night"),
+        Event(name = "Tabletop gaming")
     ]
     db.session.bulk_save_objects(events_to_add)
 

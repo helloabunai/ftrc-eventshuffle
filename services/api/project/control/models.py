@@ -7,11 +7,11 @@ class Event(db.Model):
     __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True)
-    event_name = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), nullable=False)
     event_date = db.Column(db.Integer, ForeignKey('dates.id', ondelete='CASCADE'), nullable=True)
 
-    def __init__(self, event_name):
-        self.event_name = event_name
+    def __init__(self, name):
+        self.name = name
 
     def as_dict(self):
         clear_ormstate = self.__dict__
