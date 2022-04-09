@@ -27,6 +27,7 @@ def get_all_events():
         filtered_data = [{ k: v for k,v in x.items() if k in ['id', 'name']} for x in raw_psql_response]
         return jsonify(events=filtered_data), 200
 
+@schema('event.json')
 def add_new_event():
 
     """
@@ -61,6 +62,7 @@ def view_single_event(event_id):
         ## TODO proper data required (fix database tables)
         return jsonify(serialised_data), 200
 
+@schema('event_vote.json')
 def vote_event_date(event_id):
 
     """

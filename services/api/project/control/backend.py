@@ -9,6 +9,8 @@ def create_db():
 
 def seed_db():
 
+    ## TODO -- Take from a JSON file
+
     create_db() ## remove after dev
 
     people_to_add = [
