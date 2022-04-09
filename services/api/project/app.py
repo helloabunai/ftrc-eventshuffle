@@ -5,7 +5,12 @@ from project.control import views
 shuffle_app = Flask(__name__)
 shuffle_app.config.from_object("project.config.Config")
 
-shuffle_app.add_url_rule('/', view_func=views.hello_world)
-shuffle_app.add_url_rule('/api/v1/event', view_func=views.love_you)
+shuffle_app.add_url_rule('/', view_func=views.testing_stage, methods = ['GET'])
+
+shuffle_app.add_url_rule('/api/v1/event/list', view_func=views.get_all_events, methods = ['GET'])
+shuffle_app.add_url_rule('/api/v1/event', view_func=views.add_new_event, methods = ['POST'])
+shuffle_app.add_url_rule('/api/v1/event/<id>', view_func=views.view_single_event, methods = ['GET']) #request.args.id
+shuffle_app.add_url_rule('/api/v1/event/<id>/vote', view_func=views.vote_event_date, methods = ['POST'])
+shuffle_app.add_url_rule('/api/v1/event/<id>/results', view_func=views.determine_best_date, methods = ['GET'])
 
 db.init_app(shuffle_app)

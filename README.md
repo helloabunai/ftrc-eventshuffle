@@ -9,33 +9,64 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
 ## Prerequisites
 
     - Python3 (Developed and tested with 3.8, installs this within container)
-    - Docker (which will install these following packages automatically)
+    - Docker (which will install these following packages at buildtime)
         - PYPI Packages
            - Flask==2.1.1
            - Flask-SQLAlchemy==2.5.1
            - psycopg2-binary==2.8.6
+           - pytest==7.1.1
         - Gunicorn (auto build+run)
         - PostgreSQL (auto build+run)
     - Unix (Developed on Windows 10 WSL2 CentOS, but also tested on MacOS Monterey)
 
 ### Running the development application
 
-Assuming you have docker installed on your local system, then the following instructions are sufficient to deploy
-this application. Once you clone the repository, all that is required is to ensure you are in the ./shuffleboard directory, and run the command:
+First, ensure which environment target you want to build for (development, or production) by uncommenting the required lines. Development will use the Flask built in development web server, whereas production uses a proper WSGI server (gunicorn) and possesses more strict built rules and code standards.
 
 ```
-docker-compose build
+#ENV_FILE = $(shell pwd)$(shell echo '/.env.prod') ## production
+ENV_FILE = $(shell pwd)$(shell echo '/.env.dev') ## development
+
+#export $(shell sed 's/=.*//' `pwd`/.env.prod) ## production
+export $(shell sed 's/=.*//' `pwd`/.env.dev) ## development
+
+#COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml') ## production
+COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml') ## development
+
+```
+
+Assuming you have docker installed on your local system, then the following instructions are sufficient to deploy
+this application. Once you clone the repository, all that is required is to ensure you are in the ./ftrc-eventshuffle directory (i.e. same level as the makefile), and run the command:
+
+```
+make dcompose-start
 ```
 
 This will compose a docker container, which includes a PSQL server for the Flask application to interact with.
-Before attempting to interact with any (GET, at least) API endpoints, you will need to populate the database with some data.
+Before attempting to interact with any (GET, at least) API endpoints, you will need to populate the database with some data. This assumes you have the container running, and will error out if it isn't.
 
-You can do this via the following commands (again, from the shuffleboard root directory): 
+You can do this via the following commands (again, from the ftrc-eventshuffle root directory); the first will populate the database with inital data; the second will launch the container's PSQL interface if you wish to manually confirm data is in the correct tables.
 
 ```
-docker-compose exec api python manage.py create_db
-docker-compose exec api python manage.py seed_db
+make dseed-db
+(optional) make dcheck-db
 ```
+
+You can then run some tests (via pytest) with the command:
+
+```
+make run-tests
+```
+
+Alternatively, list all commands available in the makefile (with explanations):
+
+```
+make help
+```
+
+## Database information
+
+BlllllllooOOoOp WIP
 
 ## Application tree and description
 
