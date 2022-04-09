@@ -40,31 +40,38 @@ docker-compose exec api python manage.py seed_db
 ## Application tree and description
 
 ```
-├── shuffleboard               # The application!
-│   ├── services/api
-│   │
-│   └── ├── project            # API Codebase
-│   │       ├── __init__.py    # Initialise + create Flask APP
-│   │       ├── models.py      # Store model objects for PSQL DB interface
-│   │       ├── views.py       # API endpoint URI's
-│   │       └── config.py      # Environment variables
-│   │
-│   ├── Dockerfile             # Development docker file
-│   ├── Dockerfile.prod        # Production docker file
-│   │
-│   ├── requirements.txt       # PYPI dependencies
-│   │
-│   ├── psql_init_prod.sh      # PSQL initialise script (production)
-│   ├── psql_init.sh           # PSQL initialise script (development)
-│   │
-│   └── manage.py              # CLI for launching the application
-│
-├── .env.dev                   # Environment variables
-├── .env.prod                  # For normal production products, these would not be stored
-├── .env.prod.db               # in repo, but for scope of this; figured ok.
-│ 
-├── docker-compose.yml         # Docker compose (development)
-├── docker-compose.prod.yml    # Docker compose (production)
-│
-└── README.md                  # This file :)
+├── ftrc-eventshuffle                       # The software
+├── Makefile                                # Makefile for easy docker/db commands
+├── README.md                               # This file :)
+├── docker-compose.prod.yml                 # Docker-compose for production setting
+├── docker-compose.yml                      # Docker-compose for development
+└── services                                
+    └── api                                 # The API service codebase
+        ├── Dockerfile                      # Dockerfile for development
+        ├── Dockerfile.prod                 # Dockerfile for production
+        ├── manage.py                       # Contains functions for the CLI i.e entry from docker
+        ├── project
+        │   ├── __init__.py
+        │   ├── app.py                      # Create Flask APP + link endpoints to views
+        │   ├── common                      # Common functions used throughout
+        │   │   ├── database.py
+        │   │   ├── exceptions.py
+        │   │   └── validator.py
+        │   ├── config.py                   # App/DB config for Flask app
+        │   ├── control                     # Control logic layer
+        │   │   ├── backend.py
+        │   │   ├── domain.py
+        │   │   ├── models.py               # ORM Models for PSQL data
+        │   │   └── views.py                # Views that link to API endpoints
+        │   ├── schemas                     # Schemas to ensure in/out is valid
+        │   │   ├── date.json
+        │   │   ├── event.json
+        │   │   ├── person.json
+        │   │   └── seed_data.json          # Data to populate DB from scratch
+        │   └── tests                       # Test suite for pytest
+        │       ├── test_database.py
+        │       └── test_models.py
+        ├── psql_init.sh                    # Ensure PSQL is up before creating Flask (dev)
+        ├── psql_init_prod.sh               # Same, but for production
+        └── requirements.txt                # PYPI dependencies
 ```
