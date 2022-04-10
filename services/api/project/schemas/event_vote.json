@@ -1,0 +1,21 @@
+{
+    "title": "Add Event Votes",
+    "description": "Add votes to existing events",
+    "type":"object",
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "required": [
+      "votes"
+    ],
+    "properties": {
+        "votes": {
+            "type": "array",
+            "minLength": 1,
+            "maxLength": 128,
+            "items": {
+                "type": "string",
+                "format": "date"
+            }
+        }
+    }
+}
+

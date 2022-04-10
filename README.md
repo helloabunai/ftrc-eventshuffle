@@ -9,7 +9,8 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
 ## Prerequisites
 
     - Python3 (Developed and tested with 3.8, installs this within container)
-    - Docker (which will install these following packages at buildtime)
+    - Docker (whether Docker Desktop, or otherwise. As long as Docker Engine is running!)
+    - Docker container details:
         - PYPI Packages
            - Flask==2.1.1
            - Flask-SQLAlchemy==2.5.1
@@ -20,6 +21,8 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
     - Unix (Developed on Windows 10 WSL2 CentOS, but also tested on MacOS Monterey)
 
 ### Running the development application
+
+Before we begin, it is worth noting that environment files should not be stored in version control, and the only reason they are stored in this one is for the complete portability and functionality replication of the Docker container, so that the API can function by those at futurice, as intended :)
 
 First, ensure which environment target you want to build for (development, or production) by uncommenting the required lines. Development will use the Flask built in development web server, whereas production uses a proper WSGI server (gunicorn) and possesses more strict built rules and code standards.
 
@@ -91,18 +94,15 @@ BlllllllooOOoOp WIP
         │   ├── config.py                   # App/DB config for Flask app
         │   ├── control                     # Control logic layer
         │   │   ├── backend.py
-        │   │   ├── domain.py
         │   │   ├── models.py               # ORM Models for PSQL data
         │   │   └── views.py                # Views that link to API endpoints
-        │   ├── schemas                     # Schemas to ensure in/out is valid
-        │   │   ├── date.json
-        │   │   ├── event.json
-        │   │   ├── person.json
-        │   │   └── seed_data.json          # Data to populate DB from scratch
+        │   ├── schemas                     # Schemas to ensure POST JSON payloads are valid
+        │   │   ├── event_vote.json         # POST requests for voting on event
+        │   │   └── event.json              # POST requests for adding a new event (with min. 1 date)
         │   └── tests                       # Test suite for pytest
         │       ├── test_database.py
         │       └── test_models.py
         ├── psql_init.sh                    # Ensure PSQL is up before creating Flask (dev)
-        ├── psql_init_prod.sh               # Same, but for production
+        ├── psql_init_prod.sh               # Ensure PSQL is up before creating Flask (prod)
         └── requirements.txt                # PYPI dependencies
 ```

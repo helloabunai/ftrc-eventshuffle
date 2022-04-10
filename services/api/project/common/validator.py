@@ -5,9 +5,9 @@ import jsonschema
 from flask import request
 from functools import wraps
 
-from project.common.exceptions import WorkInProgressException
+from project.common.exceptions import FailedJSONSchemaValidationException
 
-schemas_dir = 'services/api/project/schemas'
+schemas_dir = 'project/schemas/'
 schemas_path = os.path.join(os.getcwd(), schemas_dir)
 
 def get_request_payload(method):
@@ -105,22 +105,20 @@ def schema(path=None):
     :param path: path to the schema file
     :type path: string
     :returns: list of errors if there are any
-    :raises: InvalidAPIRequest if there are any errors
+    :raises: WorkInProgressException if there are any errors
 
     """
-
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            _path = path.lstrip('/')
-            schema_path = os.path.join(schemas_path, request.blueprint, _path)
+            _path = path.lstrip('/')            
+            schema_path = os.path.join(schemas_path, _path)
             payload = get_request_payload(request.method)(request)
 
             errors = validate_schema(payload, get_schema(schema_path))
             if errors:
-                raise WorkInProgressException(message=errors)
+               raise FailedJSONSchemaValidationException(message=errors)
 
             return func(*args, **kwargs)
         return wrapped
-    return 
-
+    return decorator

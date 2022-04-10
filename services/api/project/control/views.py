@@ -1,14 +1,37 @@
+from project.common.validator import schema
 from flask import jsonify, request, abort
 from project.control.models import Event, Date, Person
+from project.control.backend import shuffle_app as app
+from project.control.backend import handle_new_event
+from project.control.backend import get_event_subsidiaries
+from project.control.backend import add_event_votes
 
-#APP.ROUTE("/")
+
+
+
+
+
+
+
+
+from project.common.database import db
+
+#######################################################
+#######################################################
+
+@app.route('/', methods=['GET'])
 def testing_stage():
     
     """
-    Bad sense of humour
+    haha
     """
-    return jsonify(SendJobOffersTo="my email address")
 
+    return jsonify(SendJobOffersTo="my email address"), 200
+
+#######################################################
+#######################################################
+
+@app.route('/api/v1/event/list', methods=['GET'])
 def get_all_events():
 
     """
@@ -25,30 +48,33 @@ def get_all_events():
     else:
         raw_psql_response = [x.as_dict() for x in all_events]
         filtered_data = [{ k: v for k,v in x.items() if k in ['id', 'name']} for x in raw_psql_response]
-        return jsonify(events=filtered_data), 200
+        return jsonify(events=filtered_data), 200, {'Content-Type': 'application/json'}
 
+#######################################################
+#######################################################
+
+@app.route('/api/v1/event', methods=['POST'])
 @schema('event.json')
 def add_new_event():
 
     """
-    @app.route("/api/v1/event/")
+    @app.route("/api/v1/event")
     :param: None
     :request: POST
     :return: int Event.id
     """
 
-    print(request)
-    ## TODO take name, make Event of that name
-    ## TODO take dates, create Date object
-    ## TODO interface Event entry <- to -> Date object(S)
-    ## TODO get the new Event's ID, return to 'frontend'
+    reponse = handle_new_event(request.json)
+    return jsonify(reponse), 200, {'Content-Type': 'application/json'}
 
-    return jsonify(request.get_json(force=True))
+#######################################################
+#######################################################
 
+@app.route('/api/v1/event/<int:event_id>', methods=['GET'])
 def view_single_event(event_id):
 
     """
-    @app.route("/api/v1/event/<int:id>")
+    @app.route("/api/v1/event/<int:event_id>")
     :param: int Event.id
     :request: GET
     :return: JSON Serialised PSQL ORM Object
@@ -58,36 +84,49 @@ def view_single_event(event_id):
     if not requested_object:
         return abort(404)
     else:
-        serialised_data = requested_object.as_dict()
-        ## TODO proper data required (fix database tables)
-        return jsonify(serialised_data), 200
+        parsed_data = get_event_subsidiaries(event_id)
+        if "_sa_instance_state" in parsed_data:
+            parsed_data.pop('_sa_instance_state', None)
+        return parsed_data, 200, {'Content-Type': 'application/json'}
 
+#######################################################
+#######################################################
+
+@app.route('/api/v1/event/<int:event_id>/vote', methods=['POST'])
 @schema('event_vote.json')
 def vote_event_date(event_id):
 
     """
-    @app.route("/api/v1/event/<int:id>/vote")
+    @app.route("/api/v1/event/<int:event_id>/vote")
     :param: int Event.id
     :request: POST
     :return: todo
     """
 
+    request_json = request.json
     requested_object = Event.query.get(event_id)
     if not requested_object:
         return abort(404)
     else:
-        return jsonify(request.get_json(force=True))
+        processed_vote = add_event_votes(event_id, request_json)
+        if "_sa_instance_state" in processed_vote:
+            processed_vote.pop('_sa_instance_state', None)
+        return processed_vote, 200, {'Content-Type': 'application/json'}
 
+#######################################################
+#######################################################
+
+@app.route("/api/v1/event/<int:event_id>/results", methods=['GET'])
 def determine_best_date(event_id):
 
     """
-    @app.route("/api/v1/even/<int:id>/results")
+    @app.route("/api/v1/event/<int:id>/results")
     :param: int Event.id
     :request: GET
     :return: JSON Serialised PSQL ORM Object
     :return: Calculated date(s) suitable for all people at Event.id
     """
 
-    return jsonify(best="date")
+    return jsonify(best="date"), 200, {'Content-Type': 'application/json'}
 
 
