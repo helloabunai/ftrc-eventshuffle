@@ -56,13 +56,13 @@ def test_app(request):
 
     test_app = Flask(__name__)
     test_app.config['TESTING'] = True
-    test_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:securepassword@db:5432/futurice_shuffledb'
+    test_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:securepassword@db:5432/futurice_shuffledb_prod'
     test_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     test_app.config['SQLALCHEMY_ECHO'] = False
-    test_app.config['DATABASE_URL'] = 'postgresql://postgres:securepassword@db:5432/futurice_shuffledb'
+    test_app.config['DATABASE_URL'] = 'postgresql://postgres:securepassword@db:5432/futurice_shuffledb_prod'
     test_app.config['SQL_HOST'] = 'db'
     test_app.config['SQL_PORT'] = 5432
-    test_app.config['DATABASE'] = 'futurice_shuffledb'
+    test_app.config['DATABASE'] = 'futurice_shuffledb_prod'
 
     database.db.init_app(test_app)
     with test_app.app_context():

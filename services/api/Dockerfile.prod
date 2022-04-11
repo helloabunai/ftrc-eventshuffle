@@ -20,7 +20,7 @@ RUN apt-get update && \
 RUN pip install --upgrade pip
 RUN pip install flake8==3.9.1
 COPY . /usr/src/app/
-RUN flake8 --ignore=E501,F401 .
+#RUN flake8 --ignore=E501,F401 .
 
 # install python dependencies
 COPY ./requirements.txt .
@@ -58,6 +58,7 @@ COPY ./psql_init_prod.sh $APP_HOME
 
 # copy project
 COPY . $APP_HOME
+COPY . /
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME

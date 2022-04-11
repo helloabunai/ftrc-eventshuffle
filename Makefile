@@ -1,14 +1,14 @@
 
-#ENV_FILE = $(shell pwd)$(shell echo '/.env.prod')
-ENV_FILE = $(shell pwd)$(shell echo '/.env.dev')
+ENV_FILE = $(shell pwd)$(shell echo '/.env.prod')
+#ENV_FILE = $(shell pwd)$(shell echo '/.env.dev')
 
 include $(ENV_FILE)
 
-#export $(shell sed 's/=.*//' `pwd`/.env.prod)
-export $(shell sed 's/=.*//' `pwd`/.env.dev)
+export $(shell sed 's/=.*//' `pwd`/.env.prod)
+#export $(shell sed 's/=.*//' `pwd`/.env.dev)
 
-#COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml')
-COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml')
+COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml')
+#COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml')
 
 clear:
 	@find . -name __pycache__ -prune -exec rm -rf {} +
@@ -17,7 +17,7 @@ clear:
 
 dcompose-start:
 	@docker-compose stop;
-	@docker-compose -f ${COMPOSE_FILE} build;
+	@docker-compose -f ${COMPOSE_FILE} up --build;
 	@docker-compose up -d;
 
 dcompose-stop:
@@ -27,10 +27,10 @@ dcreate-db:
 	@docker-compose exec api python manage.py create_db;
 
 dseed-db:
-	@docker-compose exec api python manage.py seed_db;
+	@docker-compose exec api python /home/app/api/manage.py seed_db;
 
 dcheck-db:
-	@docker-compose exec db psql --username=postgres --db=futurice_shuffledb;
+	@docker-compose exec db psql --username=postgres --db=futurice_shuffledb_prod;
 
 dcleanup:
 	@docker rm $(shell docker ps -qa --no-trunc --filter "status=exited")

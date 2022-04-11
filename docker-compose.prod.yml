@@ -5,9 +5,9 @@ services:
     build:
       context: ./services/api
       dockerfile: Dockerfile.prod
-    command: gunicorn --bind 0.0.0.0:5000 manage:app
-    ports:
-      - 5000:5000
+    command: gunicorn --bind 0.0.0.0:5000 --chdir /home/app/api/project app:shuffle_app
+    expose:
+      - 5000
     env_file:
       - ./.env.prod
     depends_on:
@@ -27,6 +27,12 @@ services:
     #
     env_file:
       - ./.env.prod.db
+  nginx:
+    build: ./services/nginx
+    ports:
+      - 6925:80
+    depends_on:
+    - api
 
 volumes:
   postgres_data_prod:

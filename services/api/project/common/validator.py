@@ -7,7 +7,7 @@ from functools import wraps
 
 from project.common.exceptions import FailedJSONSchemaValidationException
 
-schemas_dir = 'project/schemas/'
+schemas_dir = 'schemas/'
 schemas_path = os.path.join(os.getcwd(), schemas_dir)
 
 def get_request_payload(method):
