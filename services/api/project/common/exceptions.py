@@ -1,4 +1,4 @@
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, Conflict
 
 class JSONException(Exception):
     """
@@ -30,3 +30,25 @@ class FailedJSONSchemaValidationException(JSONException):
     client failed schema validation
     """
     pass
+
+class DatabaseError(JSONException):
+    """
+    Generic database interaction error.
+    Inherit this error for all subsequent
+    errors that are related to database.
+    """
+    pass
+
+
+class RecordNotFound(DatabaseError):
+    """
+    Raised when the record was not found in the database.
+    """
+    pass
+
+
+class RecordAlreadyExists(DatabaseError):
+    """
+    Raised in the case of violation of a unique constraint.
+    """
+    status_code = Conflict.code

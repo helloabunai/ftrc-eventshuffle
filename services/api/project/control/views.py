@@ -1,20 +1,14 @@
 from project.common.validator import schema
 from flask import jsonify, request, abort
+
 from project.control.models import Event, Date, Person
 from project.control.backend import shuffle_app as app
+from project.common.database import db
+
 from project.control.backend import handle_new_event
 from project.control.backend import get_event_subsidiaries
 from project.control.backend import add_event_votes
-
-
-
-
-
-
-
-
-
-from project.common.database import db
+from project.control.backend import calculate_best_date
 
 #######################################################
 #######################################################
@@ -26,7 +20,7 @@ def testing_stage():
     haha
     """
 
-    return jsonify(SendJobOffersTo="my email address"), 200
+    return jsonify(SendJobOffersTo="my email address"), 200, {'Content-Type': 'application/json'}
 
 #######################################################
 #######################################################
@@ -46,7 +40,7 @@ def get_all_events():
     if not all_events:
         return abort(404)
     else:
-        raw_psql_response = [x.as_dict() for x in all_events]
+        raw_psql_response = [x.__dict__ for x in all_events]
         filtered_data = [{ k: v for k,v in x.items() if k in ['id', 'name']} for x in raw_psql_response]
         return jsonify(events=filtered_data), 200, {'Content-Type': 'application/json'}
 
@@ -85,8 +79,6 @@ def view_single_event(event_id):
         return abort(404)
     else:
         parsed_data = get_event_subsidiaries(event_id)
-        if "_sa_instance_state" in parsed_data:
-            parsed_data.pop('_sa_instance_state', None)
         return parsed_data, 200, {'Content-Type': 'application/json'}
 
 #######################################################
@@ -109,8 +101,6 @@ def vote_event_date(event_id):
         return abort(404)
     else:
         processed_vote = add_event_votes(event_id, request_json)
-        if "_sa_instance_state" in processed_vote:
-            processed_vote.pop('_sa_instance_state', None)
         return processed_vote, 200, {'Content-Type': 'application/json'}
 
 #######################################################
@@ -127,6 +117,11 @@ def determine_best_date(event_id):
     :return: Calculated date(s) suitable for all people at Event.id
     """
 
-    return jsonify(best="date"), 200, {'Content-Type': 'application/json'}
+    requested_object = Event.query.get(event_id)
+    if not requested_object:
+        return abort(404)
+    else:
+        parsed_data = calculate_best_date(event_id) 
+        return parsed_data, 200, {'Content-Type': 'application/json'}
 
 

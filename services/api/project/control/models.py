@@ -13,11 +13,6 @@ class Event(db.Model):
     def __init__(self, name):
         self.name = name
 
-    def as_dict(self):
-        clear_ormstate = self.__dict__
-        clear_ormstate.pop('_sa_instance_state', None)
-        return clear_ormstate
-
 @dataclass
 class Date(db.Model):
     __tablename__ = "dates"
@@ -33,11 +28,6 @@ class Date(db.Model):
     def __init__(self, date_value, parent_event):
         self.date_value = date_value,
         self.parent_event = parent_event
-    
-    def as_dict(self):
-        clear_ormstate = self.__dict__
-        clear_ormstate.pop('_sa_instance_state', None)
-        return clear_ormstate
 
 @dataclass
 class PersonDate(db.Model):
@@ -53,11 +43,6 @@ class PersonDate(db.Model):
     def __init__(self, date_id, person_id):
         self.date_id = date_id
         self.person_id = person_id
-
-    def as_dict(self):
-        clear_ormstate = self.__dict__
-        clear_ormstate.pop('_sa_instance_state', None)
-        return clear_ormstate
 
 @dataclass
 class Person(db.Model):
@@ -75,10 +60,5 @@ class Person(db.Model):
     
     def __str__(self):
         return f"Person: {self.name}"
-    
-    def as_dict(self):
-        clear_ormstate = self.__dict__
-        clear_ormstate.pop('_sa_instance_state', None)
-        return clear_ormstate
 
 

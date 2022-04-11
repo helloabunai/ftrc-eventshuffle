@@ -87,8 +87,10 @@ def validate_schema(payload, schema):
     :rtype: list
     """
     errors = []
-    validator = jsonschema.Draft4Validator(schema,
-                                           format_checker=jsonschema.FormatChecker())
+    validator = jsonschema.Draft4Validator(
+        schema,
+        format_checker=jsonschema.FormatChecker()
+    )
     for error in sorted(validator.iter_errors(payload), key=str):
         errors.append(error.message)
 
@@ -122,3 +124,4 @@ def schema(path=None):
             return func(*args, **kwargs)
         return wrapped
     return decorator
+

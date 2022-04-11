@@ -6,5 +6,5 @@ from project.control import views
 """
 Todo write docstring
 """
-
+ 
 db.init_app(shuffle_app)

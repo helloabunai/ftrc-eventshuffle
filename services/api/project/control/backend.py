@@ -1,16 +1,22 @@
 import datetime
 from project.common.database import db
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from project.control.models import Event, Date, Person, PersonDate
+from project.common.exceptions import RecordNotFound
 from sqlalchemy import and_
 
-##
+#####################################################
+#####################################################
 ## The main app! 
 ## Created in the backend to prevent circular
 ## imports from app.py to elsewhere
 shuffle_app = Flask(__name__)
 shuffle_app.config.from_object("project.config.Config")
 
+#####################################################
+#####################################################
+## CLI based functions
+## Called from docker commands / makefile script
 def create_db():
 
     """
@@ -60,10 +66,22 @@ def seed_db():
 
     ## create person-date association
     jakeparty_votes = [
+        ## voting for jan 1st for jake's party
         PersonDate(person_id = john_obj.id, date_id = jake_jan1.id),
         PersonDate(person_id = julia_obj.id, date_id = jake_jan1.id),
         PersonDate(person_id = paul_obj.id, date_id = jake_jan1.id),
-        PersonDate(person_id = daisy_obj.id, date_id = jake_jan1.id)
+        PersonDate(person_id = daisy_obj.id, date_id = jake_jan1.id),
+        PersonDate(person_id = dick_obj.id, date_id = jake_jan1.id),
+
+        ## voting for jan 5th for jake's party
+        PersonDate(person_id = john_obj.id, date_id = jake_jan5.id),
+        PersonDate(person_id = daisy_obj.id, date_id = jake_jan5.id),
+
+        ## voting for jan 12th for jake's party
+        PersonDate(person_id = john_obj.id, date_id = jake_jan12.id),
+        PersonDate(person_id = julia_obj.id, date_id = jake_jan12.id),
+        PersonDate(person_id = paul_obj.id, date_id = jake_jan12.id),
+        PersonDate(person_id = daisy_obj.id, date_id = jake_jan12.id),
     ]
     db.session.bulk_save_objects(jakeparty_votes, return_defaults=True)
     db.session.commit()
@@ -106,11 +124,16 @@ def seed_db():
 
     ## votes for bowling
     tabletop_votes = [
-        PersonDate(person_id = julia_obj.id, date_id = tabletop_oct31.id)
+        PersonDate(person_id = julia_obj.id, date_id = tabletop_oct31.id),
+        PersonDate(person_id = daisy_obj.id, date_id = tabletop_oct31.id)
     ]
     db.session.bulk_save_objects(tabletop_votes, return_defaults=True)
     db.session.commit()
 
+#####################################################
+#####################################################
+## Functions called by API endpoints
+## Interact with database / etc
 def handle_new_event(in_json):
     
     """
@@ -191,7 +214,13 @@ def get_event_subsidiaries(event_id):
             votes_dicts.append(indv_vote_dict)
 
     event_values['votes'] = votes_dicts
-    return event_values
+
+    ## create copy of output (just to be careful about mutability)
+    ## remove sqlalchemy timestate for clean output
+    pruned_copy = event_values 
+    if "_sa_instance_state" in pruned_copy:
+        pruned_copy.pop('_sa_instance_state', None)
+    return pruned_copy
 
 def add_event_votes(event_id, json_body):
 
@@ -216,7 +245,7 @@ def add_event_votes(event_id, json_body):
     ## get dates associated with this event ID
     ## format to YYYY-MM-DD
     dates_for_event = db.session.query(Date).filter(Date.parent_event == event_id)
-    dates_serialised = [x.as_dict() for x in dates_for_event]
+    dates_serialised = [x.__dict__ for x in dates_for_event]
     event_values['dates'] = [x['date_value'].strftime('%Y-%m-%d') for x in dates_serialised]
 
     #######################################################
@@ -234,7 +263,7 @@ def add_event_votes(event_id, json_body):
 
         requested_votes = [] ## PersonDate i.e. vote objects
         ## if requested date doesn't exist, create
-        if not [x.as_dict() for x in present_dates]:
+        if not [x.__dict__ for x in present_dates]:
             
             date_obj = datetime.datetime.strptime(vote, "%Y-%m-%d")
             current_missing_date = Date(
@@ -250,12 +279,15 @@ def add_event_votes(event_id, json_body):
         ## Get the person requesting this vote!
         ## According to the instructions, the JSON body will contain "name" as an ident
         ## so... names have to be unique if that is the case (they are in this DB)
+
+        ## Ensure the person + id exists, though..
         request_user_obj = db.session.query(Person).filter(Person.name==request_user)
-        request_user_id = request_user_obj.first().as_dict()['id']
+        try: request_user_id = request_user_obj.first().__dict__['id']
+        except AttributeError: return abort(500)
 
         ## get current date ID, since it will exist and be unique date for THIS event
         ## we can use first() as there will be one UNIQUE date per event
-        request_date_id = present_dates.first().as_dict()['id']
+        request_date_id = present_dates.first().__dict__['id']
 
         ## Create the person-date association (i.e. a vote)
         requested_votes.append(
@@ -267,9 +299,74 @@ def add_event_votes(event_id, json_body):
         db.session.commit()
 
     #######################################################
-    ## OK! Votes are now saved
+    ## OK! Votes are now saved along with relations to events/people
     ## Get information to return as per the specification
     ## This behaviour is identical to get_event_subsidiaries, so call that
     post_vote_values = get_event_subsidiaries(event_id)
     return post_vote_values
 
+def calculate_best_date(event_id):
+
+    """
+    Backend function called from the API endpoint
+    for determining the best date for ALL people.
+    Already checked if event exists, before calling here.
+
+    :param: int event_id
+    :type: integer
+    :returns: dict / json
+    """
+
+    ## Get Event object + as dict
+    requested_object = Event.query.get(event_id)
+    event_values = requested_object.__dict__
+
+    ## get dates associated with this event ID
+    ## format to YYYY-MM-DD
+    dates_for_event = db.session.query(Date).filter(Date.parent_event == event_id)
+    dates_serialised = [x.__dict__ for x in dates_for_event]
+    event_values['dates'] = [x['date_value'].strftime('%Y-%m-%d') for x in dates_serialised]
+
+    ## get all people that have voted for any date in this event
+    event_all_voters = []; potential_dates = []
+    for curr_date in dates_serialised:
+        ## we got dates, already filtered with Date.parent_event == event_id, so don't need to check event
+        date_person_relations = db.session.query(PersonDate).filter(PersonDate.date_id == curr_date['id'])
+        relations_serialised = [x.__dict__ for x in date_person_relations]
+        voter_ids = [x['person_id'] for x in relations_serialised]
+
+        ## append potential date with voter amount 
+        ## removes the need to loop over all event dates again
+        ## outside of loop, we will only return events with len(voter_ids) == total_event_participants
+        curr_potential_date = {
+            'date': curr_date['date_value'].strftime('%Y-%m-%d'), ## need to reformat datetime object
+            'voter_amount': len(voter_ids),
+            'people': [Person.query.get(x).name for x in voter_ids]
+        }
+        potential_dates.append(curr_potential_date)
+
+        ## append unique (for this event, out of all event dates) voter id
+        for voter_id in voter_ids:
+            if voter_id not in event_all_voters:
+                event_all_voters.append(voter_id)
+
+    ## determine total participants for this event
+    ## i.e. amount of unique voter IDs, from all dates, for this event only
+    total_event_participants = len(event_all_voters)
+
+    ## List comprehension to only retain dicts with voter_amount == total_event_participants
+    ## filter empty dicts that the comprehension creates, but does not populate
+    ## from now valid+populated dict list, remove 'voter_amount' as not required/requested
+    suitable_dates = [{k: v for k,v in x.items() if x['voter_amount'] == total_event_participants} for x in potential_dates]
+    suitable_dates = list(filter(None, suitable_dates))
+    suitable_dates = [{k: v for k,v in x.items() if k != 'voter_amount'} for x in suitable_dates]
+    
+    ## append the now formated/validated list of dicts to our main return object
+    event_values['suitableDates'] = suitable_dates
+
+    ## create copy of output (just to be careful about mutability and ORM persistance)
+    ## remove sqlalchemy timestate for clean output
+    pruned_copy = event_values 
+    if "_sa_instance_state" in pruned_copy:
+        pruned_copy.pop('_sa_instance_state', None)
+    return pruned_copy
