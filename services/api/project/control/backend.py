@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request, abort
 from project.control.models import Event, Date, Person, PersonDate
 from project.common.exceptions import RecordNotFound
 from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
 
 #####################################################
 #####################################################
@@ -281,8 +282,10 @@ def add_event_votes(event_id, json_body):
 
         ## Ensure the person + id exists, though..
         request_user_obj = db.session.query(Person).filter(Person.name==request_user)
-        try: request_user_id = request_user_obj.first().__dict__['id']
-        except AttributeError: return abort(500)
+        try:
+            request_user_id = request_user_obj.first().__dict__['id']
+        except AttributeError:
+            return abort(500, {'databaseError':'The requested user in this vote does not exist!'})
 
         ## get current date ID, since it will exist and be unique date for THIS event
         ## we can use first() as there will be one UNIQUE date per event
@@ -294,8 +297,12 @@ def add_event_votes(event_id, json_body):
         )
         
         ## save to DB
-        db.session.bulk_save_objects(requested_votes, return_defaults=True)
-        db.session.commit()
+        try:
+            db.session.bulk_save_objects(requested_votes, return_defaults=True)
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return abort(409, {'databaseError':'This vote is already in the database, for this event. No duplicate votes allowed'})
 
     #######################################################
     ## OK! Votes are now saved along with relations to events/people
@@ -359,7 +366,7 @@ def calculate_best_date(event_id):
     suitable_dates = [{k: v for k,v in x.items() if x['voter_amount'] == total_event_participants} for x in potential_dates]
     suitable_dates = list(filter(None, suitable_dates))
     suitable_dates = [{k: v for k,v in x.items() if k != 'voter_amount'} for x in suitable_dates]
-    
+
     ## append the now formated/validated list of dicts to our main return object
     event_values['suitableDates'] = suitable_dates
 

@@ -34,9 +34,8 @@ def get_all_events():
     :request: GET
     :return: JSON Serialised PSQL ORM Objects
     """
-
+    
     all_events = Event.query.all()
-
     if not all_events:
         return abort(404)
     else:
