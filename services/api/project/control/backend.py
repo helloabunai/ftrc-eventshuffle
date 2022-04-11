@@ -12,6 +12,7 @@ from sqlalchemy import and_
 ## imports from app.py to elsewhere
 shuffle_app = Flask(__name__)
 shuffle_app.config.from_object("project.config.Config")
+db.init_app(shuffle_app)
 
 #####################################################
 #####################################################
@@ -71,17 +72,15 @@ def seed_db():
         PersonDate(person_id = julia_obj.id, date_id = jake_jan1.id),
         PersonDate(person_id = paul_obj.id, date_id = jake_jan1.id),
         PersonDate(person_id = daisy_obj.id, date_id = jake_jan1.id),
-        PersonDate(person_id = dick_obj.id, date_id = jake_jan1.id),
 
         ## voting for jan 5th for jake's party
         PersonDate(person_id = john_obj.id, date_id = jake_jan5.id),
         PersonDate(person_id = daisy_obj.id, date_id = jake_jan5.id),
 
         ## voting for jan 12th for jake's party
-        PersonDate(person_id = john_obj.id, date_id = jake_jan12.id),
-        PersonDate(person_id = julia_obj.id, date_id = jake_jan12.id),
         PersonDate(person_id = paul_obj.id, date_id = jake_jan12.id),
         PersonDate(person_id = daisy_obj.id, date_id = jake_jan12.id),
+        PersonDate(person_id = dick_obj.id, date_id = jake_jan12.id)
     ]
     db.session.bulk_save_objects(jakeparty_votes, return_defaults=True)
     db.session.commit()

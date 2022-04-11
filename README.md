@@ -55,7 +55,8 @@ make dseed-db
 (optional) make dcheck-db
 ```
 
-You can then run some tests (via pytest) with the command:
+You can then run some tests (via pytest) with the command. This command will re-seed the database with initial dummy data.
+Certain test logic is based on this information, so be aware if you have manually added things to the database via POST requests, these will be lost upon running tests. Tests are run on the development PSQL DB server "eventshuffle_db", which is separate to the production server (which is "eventshuffle_db_prod").
 
 ```
 make run-tests

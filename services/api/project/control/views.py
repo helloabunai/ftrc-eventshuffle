@@ -1,5 +1,5 @@
 from project.common.validator import schema
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, Blueprint
 
 from project.control.models import Event, Date, Person
 from project.control.backend import shuffle_app as app
@@ -20,7 +20,7 @@ def testing_stage():
     haha
     """
 
-    return jsonify(SendJobOffersTo="my email address"), 200, {'Content-Type': 'application/json'}
+    return jsonify(URLNotInUse="JustSayingHi"), 200, {'Content-Type': 'application/json'}
 
 #######################################################
 #######################################################

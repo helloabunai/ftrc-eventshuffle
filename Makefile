@@ -37,7 +37,7 @@ dcleanup:
 	@docker rmi $(shell docker images --filter "dangling=true" -q --no-trunc)
 
 run-tests: clear
-	@pytest -s;
+	@docker-compose exec api python -m pytest -vvv -rP
 
 help:
 	@echo 'clear:'
@@ -47,7 +47,7 @@ help:
 	@echo 'dcompose-stop:'
 	@echo '  Stops running docker containers.'
 	@echo 'dcreate-db:'
-	@echo '  Interacts with manage.py within the container to create DB if it doesn\' exist.'
+	@echo '  Interacts with manage.py within the container to create DB if it does not exist.'
 	@echo '  NOTE: This would be run upon container launch anyway. Exists in makefile for debug.'
 	@echo 'dseed-db:'
 	@echo '  Populates the PSQL server with data to test/interact with.'
