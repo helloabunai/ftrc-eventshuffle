@@ -63,7 +63,7 @@ Starting from scratch:
 ```
 git clone git@github.com:helloabunai/ftrc-eventshuffle.git && cd ftrc-eventshuffle
 make dcompose-start
-make dseed-db
+make dseed-dev-db
 make run-tests
 ```
 
