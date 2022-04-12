@@ -90,13 +90,7 @@ Also, as per news this week (11th April) of a new NGINX vulnerability (https://t
 
 ---
 
-This will launch the production NGINX/Gunicorn web server at *http://localhost:6925*. The production server is data-persistent between reboots of the container. Assuming the production container is currently running from previous commands, test the data persistence with:
-
-```
-CTRL+C ##if in a live-log window
-docker-compose -f docker-compose.prod.yml down ##if not in a live-log window
-
-```
+This will launch the production NGINX/Gunicorn web server at *http://localhost:6925*. The production server is data-persistent between reboots of the container. Assuming the production container is currently running from previous commands, test the data persistence by reading the section below.
 
 #### Using the software
 
