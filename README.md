@@ -113,6 +113,8 @@ Along with standard checks, such as JSON input validation, as these endpoints ta
 - Check the event ID in the URL given exists
 - Check the received, validated vote, does not already exist (no double votes per event)
 
+*note1: As per the specification, the only identifier provided when creating a vote is "name". This was a bit strange to me, as typically names are not unique. However, since this is what the specification called for, names are unique in this database and as such are checked as an identifier when a POST request for adding votes is received. Normally, the end user will not know their database table entry ID, and I am not suggesting this should be expected in the input for votes; if I were to do this "my way", the vote input JSON should include requirements of name, email, phonenumber fields, as these would reliably identify a specific user.
+
 #### Data persistence in the production server
 
 In order to test data persistance between container "power cycles", then run raw docker commands (i.e. don't use any commands in the makefile).
