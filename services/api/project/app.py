@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify, request
 from project.common.database import db
 from project.control.backend import shuffle_app

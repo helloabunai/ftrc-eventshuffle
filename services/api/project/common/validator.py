@@ -7,8 +7,12 @@ from functools import wraps
 
 from project.common.exceptions import FailedJSONSchemaValidationException
 
-schemas_dir = 'schemas/'
-schemas_path = os.path.join(os.getcwd(), schemas_dir)
+# docker builds to different locations depending on dev/prod
+schemas_path = ''
+if os.environ['DATABASE'] == 'futurice_shuffledb':
+    schemas_path = '/usr/src/app/project/schemas/'
+else:
+    schemas_path = '/home/app/api/project/schemas/'
 
 def get_request_payload(method):
     """Get request payload based on the

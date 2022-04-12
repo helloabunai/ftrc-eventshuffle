@@ -1,14 +1,17 @@
 
-ENV_FILE = $(shell pwd)$(shell echo '/.env.prod')
-#ENV_FILE = $(shell pwd)$(shell echo '/.env.dev')
+## UNCOMMENT FOR PRODUCTION
+# ENV_FILE = $(shell pwd)$(shell echo '/.env.prod')
+# export $(shell sed 's/=.*//' `pwd`/.env.prod)
+# COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml')
+# DATABASE_STR = "futurice_shuffledb_prod"
+
+## UNCOMMENT FOR DEVELOPMENT
+ENV_FILE = $(shell pwd)$(shell echo '/.env.dev')
+export $(shell sed 's/=.*//' `pwd`/.env.dev)
+COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml')
+DATABASE_STR = "futurice_shuffledb"
 
 include $(ENV_FILE)
-
-export $(shell sed 's/=.*//' `pwd`/.env.prod)
-#export $(shell sed 's/=.*//' `pwd`/.env.dev)
-
-COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml')
-#COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml')
 
 clear:
 	@find . -name __pycache__ -prune -exec rm -rf {} +
@@ -18,19 +21,21 @@ clear:
 dcompose-start:
 	@docker-compose stop;
 	@docker-compose -f ${COMPOSE_FILE} up --build;
-	@docker-compose up -d;
 
 dcompose-stop:
-	@docker-compose stop
+	@docker-compose stop;
 
-dcreate-db:
-	@docker-compose exec api python manage.py create_db;
+dcompose-wipe:
+	@docker-compose down -v --remove-orphans;
 
-dseed-db:
+dseed-prod-db:
 	@docker-compose exec api python /home/app/api/manage.py seed_db;
 
+dseed-dev-db:
+	@docker-compose exec api python manage.py seed_db;
+
 dcheck-db:
-	@docker-compose exec db psql --username=postgres --db=futurice_shuffledb_prod;
+	@docker-compose exec db psql --username=postgres --db=$(DATABASE_STR);
 
 dcleanup:
 	@docker rm $(shell docker ps -qa --no-trunc --filter "status=exited")
@@ -46,13 +51,12 @@ help:
 	@echo '  Stops running containers, re-builds and starts fresh.'
 	@echo 'dcompose-stop:'
 	@echo '  Stops running docker containers.'
-	@echo 'dcreate-db:'
-	@echo '  Interacts with manage.py within the container to create DB if it does not exist.'
-	@echo '  NOTE: This would be run upon container launch anyway. Exists in makefile for debug.'
-	@echo 'dseed-db:'
-	@echo '  Populates the PSQL server with data to test/interact with.'
-	@echo 'dcheck-db:'
-	@echo '  Check PSQL server within running container.'
+	@echo 'dcompose-wipe:'
+	@echo '  Wipes and removes orphans (use when switching between dev/prod).'	
+	@echo 'dseed-prod-db:'
+	@echo '  Populates the production PSQL database with data to test/interact with.'
+	@echo 'dseed-dev-db:'
+	@echo '  Populates the development PSQL database with data to test/interact with.'
 	@echo 'dcleanup:'
 	@echo '  Removes exited containers and images.'
 	@echo 'run-tests:'

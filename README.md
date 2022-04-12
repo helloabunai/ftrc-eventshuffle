@@ -14,96 +14,167 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
         - PYPI Packages
            - Flask==2.1.1
            - Flask-SQLAlchemy==2.5.1
+           - gunicorn==20.1.0
            - psycopg2-binary==2.8.6
            - pytest==7.1.1
+           - jsonschema==4.4.0
         - Gunicorn (auto build+run)
         - PostgreSQL (auto build+run)
+        - NGINX (auto build+run)
     - Unix (Developed on Windows 10 WSL2 CentOS, but also tested on MacOS Monterey)
 
-### Running the development application
+### Running the application
+
+#### General information
 
 Before we begin, it is worth noting that environment files should not be stored in version control, and the only reason they are stored in this one is for the complete portability and functionality replication of the Docker container, so that the API can function by those at futurice, as intended :)
 
 First, ensure which environment target you want to build for (development, or production) by uncommenting the required lines. Development will use the Flask built in development web server, whereas production uses a proper WSGI server (gunicorn) and possesses more strict built rules and code standards.
 
 ```
-#ENV_FILE = $(shell pwd)$(shell echo '/.env.prod') ## production
-ENV_FILE = $(shell pwd)$(shell echo '/.env.dev') ## development
+## UNCOMMENT FOR PRODUCTION
+# ENV_FILE = $(shell pwd)$(shell echo '/.env.prod')
+# export $(shell sed 's/=.*//' `pwd`/.env.prod)
+# COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml')
+# DATABASE_STR = "futurice_shuffledb_prod"
 
-#export $(shell sed 's/=.*//' `pwd`/.env.prod) ## production
-export $(shell sed 's/=.*//' `pwd`/.env.dev) ## development
-
-#COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.prod.yml') ## production
-COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml') ## development
-
+## UNCOMMENT FOR DEVELOPMENT
+ENV_FILE = $(shell pwd)$(shell echo '/.env.dev')
+export $(shell sed 's/=.*//' `pwd`/.env.dev)
+COMPOSE_FILE = $(shell pwd)$(shell echo '/docker-compose.yml')
+DATABASE_STR = "futurice_shuffledb"
 ```
 
-Assuming you have docker installed on your local system, then the following instructions are sufficient to deploy
-this application. Once you clone the repository, all that is required is to ensure you are in the ./ftrc-eventshuffle directory (i.e. same level as the makefile), and run the command:
+Once you have chosen production, or development, the instructions differ very slightly.
+
+---
+**NOTE**
+
+It is important to note that you must run the command `make dcompose-wipe` when switching between the two different environments. If you don't wipe the containers, then leftover components may cause linkage issues.
+
+---
+
+##### Development
+
+Starting from scratch:
 
 ```
+git clone git@github.com:helloabunai/ftrc-eventshuffle.git && cd ftrc-eventshuffle
 make dcompose-start
-```
-
-This will compose a docker container, which includes a PSQL server for the Flask application to interact with.
-Before attempting to interact with any (GET, at least) API endpoints, you will need to populate the database with some data. This assumes you have the container running, and will error out if it isn't.
-
-You can do this via the following commands (again, from the ftrc-eventshuffle root directory); the first will populate the database with inital data; the second will launch the container's PSQL interface if you wish to manually confirm data is in the correct tables.
-
-```
 make dseed-db
-(optional) make dcheck-db
-```
-
-You can then run some tests (via pytest) with the command. This command will re-seed the database with initial dummy data.
-Certain test logic is based on this information, so be aware if you have manually added things to the database via POST requests, these will be lost upon running tests. Tests are run on the development PSQL DB server "eventshuffle_db", which is separate to the production server (which is "eventshuffle_db_prod").
-
-```
 make run-tests
 ```
 
-Alternatively, list all commands available in the makefile (with explanations):
+This will launch the Flask development webserver at *http://localhost:5000*, with which you can probe the database via API endpoints. The database will be populated with dummy data, to mimic what was described in the instructions. Additional data can be added, and the application is fault tolerant.
+
+The specification requirement of data being persistent between application launches *does not apply* to the development server, as it is for development. For this behaviour, you need to run the production server, which has data persistence as requested.
+
+##### Production
+
+Starting from scratch:
 
 ```
-make help
+git clone git@github.com:helloabunai/ftrc-eventshuffle.git && cd ftrc-eventshuffle
+make dcompose-start
+make run-tests
 ```
 
-## Database information
+---
+**NOTE**
 
-BlllllllooOOoOp WIP
+Running `run-tests` wipes the database, and inserts the original dummy data, as it is intended to be ran immediately after launching the production container to ensure functionality is at 100%, before serving clients. If you launch the production server, add extra non-default data, then run tests afterwards, this additional data will be lost.
+
+---
+
+This will launch the production NGINX/Gunicorn web server at *http://localhost:6925*. The production server is data-persistent between reboots of the container. Assuming the production container is currently running from previous commands, test the data persistence with:
+
+```
+CTRL+C ##if in a live-log window
+docker-compose -f docker-compose.prod.yml down ##if not in a live-log window
+
+```
+
+#### Using the software
+
+From the running server, either development or production, the API endpoints are as per the instructions:
+
+ - /api/v1/event/list [GET]
+ - /api/v1/event [POST]
+ - /api/v1/event/{id} [GET]
+ - /api/v1/event/{id}/vote [POST]
+ - /api/v1/event/{id}/results [GET]
+
+Using the incorrect request method on any endpoint will return an error.
+
+For the two endpoints that accept POST requests, any json data sent in the body of said POST request will be checked against a json schema to ensure data is in the correct format and of the correct type, before inserting anything into the database. If json fails validation, then an error code will return to the user.
+
+Along with standard checks, such as JSON input validation, as these endpoints take user-input, extra checks are carried out to ensure fault tolerance. Some examples are:
+- Check the user adding votes exists *note1
+- Check the event ID in the URL given exists
+- Check the received, validated vote, does not already exist (no double votes per event)
+
+#### Data persistence in the production server
+
+In order to test data persistance between container "power cycles", then run raw docker commands (i.e. don't use any commands in the makefile).
+
+```
+## add some non-default data via API (e.g. adding a vote)
+docker-compose -f docker-compose.prod.yml down 
+docker-compose -f docker-compose.prod.yml up
+## check added data is still there via API requests or via make dcheck-db
+```
+
+Alternatively, if your personal docker settings have launched the container into a tail -f type "live log" window:
+
+```
+## add some non-default data via API (e.g. adding a vote)
+CTRL+C to quit
+docker-compose -f docker-compose.prod.yml up
+## check added data is still there via API requests or via make dcheck-db
+```
+
+The non-default data that you added to the database will be present throughout container up/down cycles.
 
 ## Application tree and description
 
+Below you can find the detailed tree of the application/repository directory, with some explanations of what files do next to them.
+
 ```
-├── ftrc-eventshuffle                       # The software
-├── Makefile                                # Makefile for easy docker/db commands
-├── README.md                               # This file :)
-├── docker-compose.prod.yml                 # Docker-compose for production setting
-├── docker-compose.yml                      # Docker-compose for development
-└── services                                
-    └── api                                 # The API service codebase
-        ├── Dockerfile                      # Dockerfile for development
-        ├── Dockerfile.prod                 # Dockerfile for production
-        ├── manage.py                       # Contains functions for the CLI i.e entry from docker
-        ├── project
-        │   ├── __init__.py
-        │   ├── app.py                      # Create Flask APP + link endpoints to views
-        │   ├── common                      # Common functions used throughout
-        │   │   ├── database.py
-        │   │   ├── exceptions.py
-        │   │   └── validator.py
-        │   ├── config.py                   # App/DB config for Flask app
-        │   ├── control                     # Control logic layer
-        │   │   ├── backend.py
-        │   │   ├── models.py               # ORM Models for PSQL data
-        │   │   └── views.py                # Views that link to API endpoints
-        │   ├── schemas                     # Schemas to ensure POST JSON payloads are valid
-        │   │   ├── event_vote.json         # POST requests for voting on event
-        │   │   └── event.json              # POST requests for adding a new event (with min. 1 date)
-        │   └── tests                       # Test suite for pytest
-        │       ├── test_database.py
-        │       └── test_models.py
-        ├── psql_init.sh                    # Ensure PSQL is up before creating Flask (dev)
-        ├── psql_init_prod.sh               # Ensure PSQL is up before creating Flask (prod)
-        └── requirements.txt                # PYPI dependencies
+ftrc-eventshuffle                       # The software
+│
+├── Makefile                            # Makefile for easy docker/db commands
+├── README.md                           # This file :)
+├── docker-compose.prod.yml             # Docker-compose for production setting
+├── docker-compose.yml                  # Docker-compose for development
+└── services                            # All services provided 
+    ├── api                             # The API service
+    │   ├── Dockerfile                  # Dockerfile for development
+    │   ├── Dockerfile.prod             # Dockerfile for production
+    │   ├── manage.py                   # Contains functions for the CLI i.e entry from docker
+    │   ├── project                     
+    │   │   ├── __init__.py
+    │   │   ├── app.py                  # The Flask App
+    │   │   ├── common                  # Common functions used throughout the project
+    │   │   │   ├── database.py
+    │   │   │   ├── exceptions.py
+    │   │   │   └── validator.py        # Ensures JSON within POST conforms to schemas
+    │   │   ├── config.py               # Some environment variables for Flask
+    │   │   ├── conftest.py             # PyTest configuration
+    │   │   ├── control                 # Control logic
+    │   │   │   ├── backend.py          # Where results are calculated/data is gathered
+    │   │   │   ├── models.py           # ORM models for PSQL data
+    │   │   │   └── views.py            # Views that link to API endpoints
+    │   │   ├── schemas                 # POST JSON Body Schemas
+    │   │   │   ├── event.json          # For creating a new event
+    │   │   │   └── event_vote.json     # For voting on an existing event
+    │   │   └── tests
+    │   │       ├── test_app.py         # Test API endpoints
+    │   │       ├── test_db.py          # Test database and table relations
+    │   │       └── test_models.py      # Unit tests for model objects
+    │   ├── psql_init.sh                # Ensure PSQL is up before creating Flask (dev)
+    │   ├── psql_init_prod.sh           # Ensure PSQL is up before creating Flask (prod)
+    │   └── requirements.txt            # PYPI dependencies
+    └── nginx                           # The production webserver
+        ├── Dockerfile
+        └── nginx.conf
 ```
