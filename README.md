@@ -84,6 +84,8 @@ make run-tests
 
 Running `run-tests` wipes the database, and inserts the original dummy data, as it is intended to be ran immediately after launching the production container to ensure functionality is at 100%, before serving clients. If you launch the production server, add extra non-default data, then run tests afterwards, this additional data will be lost.
 
+Also, as per news this week (11th April) of a new NGINX vulnerability (https://therecord.media/f5-investigating-reports-of-nginx-zero-day/), it is worth noting that if this was a proper customer based product, different steps would be need to be taken in order to ensure service security.
+
 ---
 
 This will launch the production NGINX/Gunicorn web server at *http://localhost:6925*. The production server is data-persistent between reboots of the container. Assuming the production container is currently running from previous commands, test the data persistence with:
