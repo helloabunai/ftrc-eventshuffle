@@ -23,6 +23,8 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
         - NGINX (auto build+run)
     - Unix (Developed on Windows 10 WSL2 CentOS, but also tested on MacOS Monterey)
 
+I have decided to specify exact versions of python dependencies, so that we can replicate environment behaviour exactly between buildtime. This is incase a newer version of any package is released between the time of me writing this, and users testing/using the software, which may result in certain package functions changing behaviour/data-types/returns/etc. Naturally, data types are tested for to ensure things should proceed; I am just being careful and wanting to replicate the experience in it's entirety.
+
 ### Running the application
 
 #### General information
