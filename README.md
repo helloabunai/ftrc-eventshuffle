@@ -1,5 +1,19 @@
 # Futurice Eventshuffle API
 
+## Simple instructions
+
+```
+## (un)comment appropriate lines in makefile to ensure Production use
+git clone git@github.com:helloabunai/ftrc-eventshuffle.git && cd ftrc-eventshuffle
+make dcompose-start
+make dseed-prod-db
+make run-tests
+```
+
+A server will be running at http://localhost:6925/. Good to go!
+
+## Detailed description
+
 An EventShuffle implementation in a scalable Flask API, served in a docker container, for Futurice.
 As this is a backend task, there is no direct front-end interface included.
 
@@ -25,9 +39,9 @@ Requests are expected to be `Content-Type: application/json` with appropriate fu
 
 I have decided to specify exact versions of python dependencies, so that we can replicate environment behaviour exactly between buildtime. This is incase a newer version of any package is released between the time of me writing this, and users testing/using the software, which may result in certain package functions changing behaviour/data-types/returns/etc. Naturally, data types are tested for to ensure things should proceed; I am just being careful and wanting to replicate the experience in it's entirety.
 
-### Running the application
+## Running the application
 
-#### General information
+### General information
 
 Before we begin, it is worth noting that environment files should not be stored in version control, and the only reason they are stored in this one is for the complete portability and functionality replication of the Docker container, so that the API can function by those at futurice, as intended :)
 
@@ -56,7 +70,7 @@ It is important to note that you must run the command `make dcompose-wipe` when 
 
 ---
 
-##### Development
+#### Development
 
 Starting from scratch:
 
@@ -71,7 +85,7 @@ This will launch the Flask development webserver at *http://localhost:5000*, wit
 
 The specification requirement of data being persistent between application launches *does not apply* to the development server, as it is for development. For this behaviour, you need to run the production server, which has data persistence as requested.
 
-##### Production
+#### Production
 
 Starting from scratch:
 
@@ -92,7 +106,7 @@ Also, as per news this week (11th April) of a new NGINX vulnerability (https://t
 
 This will launch the production NGINX/Gunicorn web server at *http://localhost:6925*. The production server is data-persistent between reboots of the container. Assuming the production container is currently running from previous commands, test the data persistence by reading the section below.
 
-#### Using the software
+### Using the software
 
 From the running server, either development or production, the API endpoints are as per the instructions:
 
@@ -113,7 +127,7 @@ Along with standard checks, such as JSON input validation, as these endpoints ta
 
 *note1: As per the specification, the only identifier provided when creating a vote is "name". This was a bit strange to me, as typically names are not unique. However, since this is what the specification called for, names are unique in this database and as such are checked as an identifier when a POST request for adding votes is received. Normally, the end user will not know their database table entry ID, and I am not suggesting this should be expected in the input for votes; if I were to do this "my way", the vote input JSON should include requirements of name, email, phonenumber fields, as these would reliably identify a specific user.
 
-#### Data persistence in the production server
+### Data persistence in the production server
 
 In order to test data persistance between container "power cycles", then run raw docker commands (i.e. don't use any commands in the makefile).
 
